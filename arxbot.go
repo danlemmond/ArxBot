@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
 	"log"
-	"net/http"
+	//"net/http"
 	"os"
 	"strings"
+	"github.com/DevinCarr/goarxiv"
 )
 
 func main() {
@@ -26,33 +26,72 @@ func main() {
 
 		if m.Type == "message" && strings.HasPreix(m.Text, "<@"+id+">") {
 			parts := strings.Fields(m.Text)
-			if len(parts) == 3 && parts[1] == "stock" {
+			if len(parts) == 3 && parts[1] == "papers" {
 				go func(m Message) {
-					m.Text = getQuote(parts[2])
+					m.Text = getPapers(parts[2])
 					postMessage(ws, m)
 				}(m)
 
 			} else {
-				m.text = fmt.Sprintf("sorry, that does not compute\n")
-				postMessage(ws, m)
+				fmt.Println("Query failed. Please use @arxivbot help for assistance.")
 			}
+			if len(parts) == 5 && parts[1] == "author" {
+				go func(m Message) {
+					m.Text = authorSearch(parts[2:3], parts[4])
+					postMessage(ws, m)
+				}(m)
+			} else {
+				fmt.Println("Query failed. Please use @arxivbot help for assistance.")
+			}
+			if len(parts) == 4 && parts[1] == "topic" {
+				go func(m Message) {
+					m.Text = topicSearch(parts[2], parts[3])
+					postMessage(ws, m)
+				}(m)
+			} else {
+				fmt.Println("Query failed. Please use @arxivbot help for assistance.")
+			}
+
 		}
 	}
 }
 
-func getQuote(sym string) string {
-	sym = strings.ToUpper(sym)
-	url := fmt.Sprintf("https://download.finance.yahoo.com/d/quotes.csv?s=%s&f=nsl1op&e=.csv", sym)
-	resp, err := http.Get(url)
+func getPapers(n int) string {
+	newsearch = goarxiv.New()
+	newsearch.AddQuery("search_query", "cat:cs.CV")
+	resp, err := newsearch.Get()
 	if err != nil {
 		return fmt.Sprintf("error: %v", err)
 	}
-	rows, err := csv.NewReader(resp.Body).ReadAll()
-	if err != nil {
-		return fmt.Sprintf("error: %v", err)
+	for i := 0; i < n; i++ {
+		fmt.Println(resp.Entry[i].Title, resp.Entry[i].Summary, resp.Entry[i].Author, resp.Entry[i].Link)
 	}
-	if len(rows) >= 1 && len(rows[0]) == 5 {
-		return fmt.Sprintf("%s (%s) is trading at $%s" rows[0][0], rows [0][1], rows[0][2])
-	}
-	return fmt.Sprintf("Unknown response format (symbol was \"%s\")", sym)
 }
+
+func authorSearch (s string, n int) string {
+	newsearch = goarxiv.New()
+	newsearch.AddQuery("search_query", "au: %s", s)
+	resp, err := newsearch.Get()
+	if err != nil {
+		return fmt.Sprintf("Error: %v", err)
+	}
+	for i := 0; i < n; i++ {
+		fmt.Println(resp.Entry[i].Title, resp.Entry[i].Summary, resp.Entry[i].Author, resp.Entry[i].Link)
+	}
+}
+
+func topicSearch (s string, n int) {
+	newsearch := goarxiv.New()
+	newsearch.AddQuery("search_query", "cat:%s", s)
+	resp, err := newsearch.Get()
+	if err != nil {
+		return fmt.Sprintf("Error: %v", err)
+	}
+	for i := 0; i < n; i++ {
+		fmt.Println(resp.Entry[i].Title, resp.Entry[i].Summary, resp.Entry[i].Author, resp.Entry[i].Link)
+	}
+}
+
+//func keywordSearch (s []string) {
+//
+//}
