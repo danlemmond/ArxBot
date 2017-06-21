@@ -14,7 +14,7 @@ func main() {
 	toMe := bot.Messages(slackbot.DirectMessage, slackbot.DirectMention, slackbot.Mention).Subrouter()
 	toMe.Hear("(?i)(hi|hello).*").MessageHandler(HelloHandler)
 	bot.Hear("(?i)how are you?(.*)").MessageHandler(HowAreYouHandler)
-	bot.Hear("(?i)papers").MessageHandler(AttachmentsHandler)
+	bot.Hear("(?i)papers").MessageHandler(PapersHandler)
 	bot.Run()
 }
 
@@ -26,9 +26,11 @@ func HowAreYouHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Message
 	bot.Reply(evt, "A bit tired. Get it? A bit?", slackbot.WithTyping)
 }
 
-func AttachmentsHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+func PapersHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	s := goarxiv.New()
 	s.AddQuery("search_query", "cat:cs.CV")
+	s.AddQuery("sortBy", "submittedDate")
+	s.AddQuery("sortOrder", "descending")
 	result, err := s.Get()
 	if err != nil {
 		bot.Reply(evt, "Hey, something broke. Try again?", slackbot.WithTyping)
@@ -38,6 +40,7 @@ func AttachmentsHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messa
 			Title: 		result.Entry[i].Title,
 			AuthorName:	result.Entry[i].Author.Name,
 			Text:		result.Entry[i].Summary.Body,
+			TitleLink:  result.Entry[i].Link[1].Href,
 			Fallback: 	result.Entry[i].Summary.Body,
 			Color: 		"#371dba",
 		}
