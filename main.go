@@ -10,21 +10,21 @@ import (
 )
 
 var catmap = map[string]string{
-	"stat": "Statistics",
-	"q-bio": "Quantitative Biology",
-	"cs": "Computer Science",
-	"nlin": "Nonlinear Sciences",
-	"math": "Math",
+	"stat":     "Statistics",
+	"q-bio":    "Quantitative Biology",
+	"cs":       "Computer Science",
+	"nlin":     "Nonlinear Sciences",
+	"math":     "Math",
 	"astro-ph": "Astrophysics",
 	"cond-mat": "Physics - Mat",
-	"gr-qc": "General Relativity",
-	"hep-ex": "High Energy Physics - Experiment",
-	"hep-lat": "High Energy Physics - Lattice",
-	"hep-ph": "High Energy Physics - Phenomenology",
-	"hep-th": "High Energy Physics - Theory",
-	"nucl-ex": "Nuclear Experiment",
-	"nucl-th": "Nuclear Theory",
-	"physics": "Physics",
+	"gr-qc":    "General Relativity",
+	"hep-ex":   "High Energy Physics - Experiment",
+	"hep-lat":  "High Energy Physics - Lattice",
+	"hep-ph":   "High Energy Physics - Phenomenology",
+	"hep-th":   "High Energy Physics - Theory",
+	"nucl-ex":  "Nuclear Experiment",
+	"nucl-th":  "Nuclear Theory",
+	"physics":  "Physics",
 	"quant-ph": "Quantum Physics",
 }
 
@@ -78,12 +78,10 @@ func main() {
 	bot.Run()
 }
 
-
 //HelloHandler makes the bot say hello...
 func HelloHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	bot.Reply(evt, "Oh hello!", slackbot.WithTyping)
 }
-
 
 //CSCategoriesHandler returns a list of the 5 most recent papers in a CS category. Help returns a list of options.
 func CSCategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
@@ -107,7 +105,7 @@ func CSCategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Mess
 					Text:       result.Entry[i].Summary.Body,
 					TitleLink:  result.Entry[i].Link[1].Href,
 					Fallback:   result.Entry[i].Summary.Body,
-					Footer:		strtm,
+					Footer:     strtm,
 					Color:      "#371dba",
 				}
 
@@ -126,7 +124,6 @@ func CSCategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Mess
 	}
 }
 
-
 //CategoriesHandler returns a list of the most recent 5 papers given a category and subcategory.
 func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	parts := strings.Fields(evt.Text)
@@ -134,7 +131,7 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 		_, ok := catmap[parts[1]]
 		if ok {
 			s := goarxiv.New()
-			s.AddQuery("search_query", "cat:" + parts[1] + "." + parts[2])
+			s.AddQuery("search_query", "cat:"+parts[1]+"."+parts[2])
 			s.AddQuery("sortBy", "submittedDate")
 			s.AddQuery("sortOrder", "descending")
 			result, err := s.Get()
@@ -149,7 +146,7 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 					Text:       result.Entry[i].Summary.Body,
 					TitleLink:  result.Entry[i].Link[1].Href,
 					Fallback:   result.Entry[i].Summary.Body,
-					Footer: 	"Published " + strtp,
+					Footer:     "Published " + strtp,
 					Color:      "#371dba",
 				}
 
@@ -163,13 +160,12 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 	}
 }
 
-
 //AuthorHandler returns the papers written by a given author, submitted by the user.
 func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	parts := strings.Fields(evt.Text)
 	if len(parts) == 2 && parts[0] == "author" && parts[1] != "help" {
 		s := goarxiv.New()
-		s.AddQuery("search_query", "au:" + parts[1])
+		s.AddQuery("search_query", "au:"+parts[1])
 		s.AddQuery("sortBy", "submittedDate")
 		s.AddQuery("sortOrder", "descending")
 		result, err := s.Get()
@@ -184,7 +180,7 @@ func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEve
 				Text:       result.Entry[i].Summary.Body,
 				TitleLink:  result.Entry[i].Link[1].Href,
 				Fallback:   result.Entry[i].Summary.Body,
-				Footer: 	"Published " + strtp,
+				Footer:     "Published " + strtp,
 				Color:      "#371dba",
 			}
 
@@ -194,7 +190,7 @@ func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEve
 	}
 	if len(parts) == 3 && parts[0] == "author" {
 		s := goarxiv.New()
-		s.AddQuery("search_query", "au:" + parts[2] + "_" + parts[1])
+		s.AddQuery("search_query", "au:"+parts[2]+"_"+parts[1])
 		s.AddQuery("sortBy", "submittedDate")
 		s.AddQuery("sortOrder", "descending")
 		result, err := s.Get()
@@ -209,7 +205,7 @@ func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEve
 				Text:       result.Entry[i].Summary.Body,
 				TitleLink:  result.Entry[i].Link[1].Href,
 				Fallback:   result.Entry[i].Summary.Body,
-				Footer: 	"Published " + strtp,
+				Footer:     "Published " + strtp,
 				Color:      "#371dba",
 			}
 
