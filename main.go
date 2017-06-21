@@ -73,15 +73,19 @@ func main() {
 	toMe := bot.Messages(slackbot.DirectMessage, slackbot.DirectMention, slackbot.Mention).Subrouter()
 	toMe.Hear("(?i)(hi|hello).*").MessageHandler(HelloHandler)
 	bot.Hear("(?i)cs(.*)").MessageHandler(CSCategoriesHandler)
-	bot.Hear("(?i)papers").MessageHandler(PapersHandler)
+	bot.Hear("(?i)author").MessageHandler(AuthorHandler)
 	bot.Hear("(?i)categories(.*)").MessageHandler(CategoriesHandler)
 	bot.Run()
 }
 
+
+//HelloHandler makes the bot say hello...
 func HelloHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	bot.Reply(evt, "Oh hello!", slackbot.WithTyping)
 }
 
+
+//CSCategoriesHandler returns a list of the 5 most recent papers in a CS category. Help returns a list of options.
 func CSCategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	parts := strings.Fields(evt.Text)
 	if len(parts) == 2 && parts[0] == "cs" && parts[1] != "help" {
@@ -122,6 +126,8 @@ func CSCategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Mess
 	}
 }
 
+
+//CategoriesHandler returns a list of the most recent 5 papers given a category and subcategory.
 func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	parts := strings.Fields(evt.Text)
 	if len(parts) == 3 && parts[0] == "categories" && parts[1] != "help" {
@@ -157,30 +163,58 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 	}
 }
 
-func PapersHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
-	s := goarxiv.New()
-	s.AddQuery("search_query", "cat:cs.CV")
-	s.AddQuery("sortBy", "submittedDate")
-	s.AddQuery("sortOrder", "descending")
-	result, err := s.Get()
-	if err != nil {
-		bot.Reply(evt, "Hey, something broke. Try again?", slackbot.WithTyping)
-	}
-	for i := 0; i < 5; i++ {
-		strtm := string(result.Entry[i].Published)
-		attachment := slack.Attachment{
-			Title:      result.Entry[i].Title,
-			AuthorName: result.Entry[i].Author.Name,
-			Text:       result.Entry[i].Summary.Body,
-			TitleLink:  result.Entry[i].Link[1].Href,
-			Fallback:   result.Entry[i].Summary.Body,
-			Footer: 	strtm,
-			Color:      "#371dba",
+
+//AuthorHandler returns the papers written by a given author, submitted by the user.
+func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	parts := strings.Fields(evt.Text)
+	if len(parts) == 2 && parts[0] == "author" && parts[1] != "help" {
+		s := goarxiv.New()
+		s.AddQuery("search_query", "au:" + parts[1])
+		s.AddQuery("sortBy", "submittedDate")
+		s.AddQuery("sortOrder", "descending")
+		result, err := s.Get()
+		if err != nil {
+			bot.Reply(evt, "Sorry, there was an error. Try again!", slackbot.WithTyping)
 		}
+		for i := 0; i < len(result.Entry); i++ {
+			strtp := string(result.Entry[i].Published)
+			attachment := slack.Attachment{
+				Title:      result.Entry[i].Title,
+				AuthorName: result.Entry[i].Author.Name,
+				Text:       result.Entry[i].Summary.Body,
+				TitleLink:  result.Entry[i].Link[1].Href,
+				Fallback:   result.Entry[i].Summary.Body,
+				Footer: 	"Published " + strtp,
+				Color:      "#371dba",
+			}
 
-		attachments := []slack.Attachment{attachment}
+			attachments := []slack.Attachment{attachment}
+			bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
+		}
+	}
+	if len(parts) == 3 && parts[0] == "author" {
+		s := goarxiv.New()
+		s.AddQuery("search_query", "au:" + parts[2] + "_" + parts[1])
+		s.AddQuery("sortBy", "submittedDate")
+		s.AddQuery("sortOrder", "descending")
+		result, err := s.Get()
+		if err != nil {
+			bot.Reply(evt, "Sorry, there was an error. Try again!", slackbot.WithTyping)
+		}
+		for i := 0; i < len(result.Entry); i++ {
+			strtp := string(result.Entry[i].Published)
+			attachment := slack.Attachment{
+				Title:      result.Entry[i].Title,
+				AuthorName: result.Entry[i].Author.Name,
+				Text:       result.Entry[i].Summary.Body,
+				TitleLink:  result.Entry[i].Link[1].Href,
+				Fallback:   result.Entry[i].Summary.Body,
+				Footer: 	"Published " + strtp,
+				Color:      "#371dba",
+			}
 
-		bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
-		//bot.Reply(evt, result.Entry[i].Link[1], slackbot.WithTyping)
+			attachments := []slack.Attachment{attachment}
+			bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
+		}
 	}
 }
