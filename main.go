@@ -71,16 +71,23 @@ func main() {
 	bot := slackbot.New(os.Getenv("SLACK_TOKEN"))
 
 	toMe := bot.Messages(slackbot.DirectMessage, slackbot.DirectMention, slackbot.Mention).Subrouter()
-	toMe.Hear("(?i)(hi|hello).*").MessageHandler(HelloHandler)
+	toMe.Hear("(?i)(hi|hello).*").MessageHandler(HelpHandler)
 	bot.Hear("(?i)cs(.*)").MessageHandler(CSCategoriesHandler)
 	bot.Hear("(?i)author").MessageHandler(AuthorHandler)
 	bot.Hear("(?i)categories(.*)").MessageHandler(CategoriesHandler)
+	bot.Hear("(?i)arxbot(.*)").MessageHandler(HelpHandler)
 	bot.Run()
 }
 
-//HelloHandler makes the bot say hello...
-func HelloHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
-	bot.Reply(evt, "Oh hello!", slackbot.WithTyping)
+//HelpHandler returns results and options for Arxbot, including available commands
+func HelpHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	parts := strings.Fields(evt.Text)
+	if len(parts) == 2 && parts[0] == "arxbot" && parts[1] == "help" {
+		bot.Reply(evt, "Hey, thanks for using Arxbot, an Arxiv parser for Slack!", slackbot.WithTyping)
+		bot.Reply(evt, "Arxbot is a dynamic parser for Arxiv that allows user to input their own search parameters and receive results.", slackbot.WithTyping)
+		bot.Reply(evt, "The current available commands are author, cs, and categories.", slackbot.WithTyping)
+		bot.Reply(evt, "Type '[command] help' to get more information about a command, ex. author help", slackbot.WithTyping)
+	}
 }
 
 //CSCategoriesHandler returns a list of the 5 most recent papers in a CS category. Help returns a list of options.
@@ -158,6 +165,11 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 			bot.Reply(evt, "Sorry, invalid category or subcategory!", slackbot.WithTyping)
 		}
 	}
+	if len(parts) == 2 && parts[0] == "categories" && parts[1] == "help" {
+		bot.Reply(evt, "The categories function will allow you to parse for papers for categories outside of Computer Science, such as math or physics.", slackbot.WithTyping)
+		bot.Reply(evt, "Query format is categories [primary] [secondary]", slackbot.WithTyping)
+		bot.Reply(evt, "For example, [categories math LO] will return the 5 most recent Logic papers published to Arxiv.", slackbot.WithTyping)
+	}
 }
 
 //AuthorHandler returns the papers written by a given author, submitted by the user.
@@ -212,5 +224,9 @@ func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEve
 			attachments := []slack.Attachment{attachment}
 			bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
 		}
+	}
+	if (len(parts) == 2 && parts[0] == "author" && parts[1] == "help") {
+		bot.Reply(evt, "The author command allows you to search for authors by last name, or first and last name.", slackbot.WithTyping)
+		bot.Reply(evt, "The two uses are: author [lastname] or author [first] [last]", slackbot.WithTyping)
 	}
 }
