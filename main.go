@@ -201,8 +201,9 @@ func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEve
 		}
 	}
 	if len(parts) == 3 && parts[0] == "author" {
+		a := []rune(parts[1])
 		s := goarxiv.New()
-		s.AddQuery("search_query", "au:"+parts[2]+"_"+parts[1])
+		s.AddQuery("search_query", "au:" + parts[2] + "_" + string(a[0]))
 		s.AddQuery("sortBy", "submittedDate")
 		s.AddQuery("sortOrder", "descending")
 		result, err := s.Get()
