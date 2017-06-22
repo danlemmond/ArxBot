@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"os"
 	"strings"
+	"fmt"
 )
 
 var catmap = map[string]string{
@@ -76,6 +77,7 @@ func main() {
 	bot.Hear("(?i)author").MessageHandler(AuthorHandler)
 	bot.Hear("(?i)categories(.*)").MessageHandler(CategoriesHandler)
 	bot.Hear("(?i)arxbot(.*)").MessageHandler(HelpHandler)
+	bot.Hear("(?i)title(.*)").MessageHandler(TitleHandler)
 	bot.Run()
 }
 
@@ -89,6 +91,44 @@ func HelpHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent
 		bot.Reply(evt, "Type '[command] help' to get more information about a command, ex. author help", slackbot.WithTyping)
 	}
 }
+
+//TitleHandler allows users to query articles by title
+func TitleHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	parts := strings.Fields(evt.Text)
+	if len(parts) >= 2 && parts[0] == "title" && parts[1] != "help" {
+		strjn := strings.Join(parts[1:], "%20")
+		s := goarxiv.New()
+		s.AddQuery("search_query", "ti:\"" + strjn + "\"")
+		s.AddQuery("sortBy", "submittedDate")
+		s.AddQuery("sortOrder", "descending")		
+		fmt.Println(s.Query)
+		result, err := s.Get()
+		if err != nil {
+			bot.Reply(evt, "Something broke! Please try again.", slackbot.WithTyping)
+		}
+		for i := 0; i < len(result.Entry); i++ {
+			strtm := string(result.Entry[i].Published)
+			attachment := slack.Attachment{
+				Title:      result.Entry[i].Title,
+				AuthorName: result.Entry[i].Author.Name,
+				Text:       result.Entry[i].Summary.Body,
+				TitleLink:  result.Entry[i].Link[1].Href,
+				Fallback:   result.Entry[i].Summary.Body,
+				Footer:     strtm,
+				Color:      "#371dba",
+			}
+
+			attachments := []slack.Attachment{attachment}
+
+			bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
+		}
+	}
+	if len(parts) == 2 && parts[0] == "title" && parts[1]== "help" {
+		bot.Reply(evt, "The Title query allows users to query Arxiv by article title", slackbot.WithTyping)
+		bot.Reply(evt, "The command is used by typing title [title of article]", slackbot.WithTyping)
+	}
+}
+
 
 //CSCategoriesHandler returns a list of the 5 most recent papers in a CS category. Help returns a list of options.
 func CSCategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
