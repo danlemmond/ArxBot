@@ -318,7 +318,7 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 		}
 	}
 	if len(parts) == 2 && parts[0] == "categories" && parts[1] == "help" {
-		bot.Reply(evt, "The categories function will allow you to parse for papers for categories outside of Computer Science, such as math or physics.", slackbot.WithTyping)
+		bot.Reply(evt, "The categories function will allow you to parse for papers by category, such as math, physics, or computer science.", slackbot.WithTyping)
 		bot.Reply(evt, "Query format is: categories [primary] [secondary]", slackbot.WithTyping)
 		bot.Reply(evt, "For example, [categories math LO] will return the 5 most recent Logic papers published to Arxiv.", slackbot.WithTyping)
 	}
