@@ -183,7 +183,6 @@ func main() {
 
 	toMe := bot.Messages(slackbot.DirectMessage, slackbot.DirectMention, slackbot.Mention).Subrouter()
 	go toMe.Hear("(?i)(hi|hello).*").MessageHandler(HelpHandler)
-	go bot.Hear("(?i)cs(.*)").MessageHandler(CSCategoriesHandler)
 	go bot.Hear("(?i)author").MessageHandler(AuthorHandler)
 	go bot.Hear("(?i)categories(.*)").MessageHandler(CategoriesHandler)
 	go bot.Hear("(?i)arxbot(.*)").MessageHandler(HelpHandler)
@@ -197,7 +196,7 @@ func HelpHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent
 	if len(parts) == 2 && parts[0] == "arxbot" && parts[1] == "help" {
 		bot.Reply(evt, "Hey, thanks for using Arxbot, an Arxiv parser for Slack!", slackbot.WithTyping)
 		bot.Reply(evt, "Arxbot is a dynamic parser for Arxiv that allows user to input their own search parameters and receive results.", slackbot.WithTyping)
-		bot.Reply(evt, "The current available commands are author, cs, title, and categories.", slackbot.WithTyping)
+		bot.Reply(evt, "The current available commands are author, title, and categories.", slackbot.WithTyping)
 		bot.Reply(evt, "Type '[command] help' to get more information about a command, ex. author help", slackbot.WithTyping)
 	}
 	if len(parts) == 1 && parts[0] == "arxbot" {
@@ -240,51 +239,6 @@ func TitleHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEven
 	if len(parts) == 2 && parts[0] == "title" && parts[1] == "help" {
 		bot.Reply(evt, "The Title query allows users to query Arxiv by article title", slackbot.WithTyping)
 		bot.Reply(evt, "The command is used by typing:\ntitle [title of article]", slackbot.WithTyping)
-	}
-}
-
-//CSCategoriesHandler returns a list of the 5 most recent papers in a CS category. Help returns a list of options.
-func CSCategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
-	parts := strings.Fields(evt.Text)
-	if len(parts) == 2 && parts[0] == "cs" && parts[1] != "help" {
-		_, ok := csmap[parts[1]]
-		if ok {
-			s := goarxiv.New()
-			s.AddQuery("search_query", "cat:cs."+parts[1])
-			s.AddQuery("sortBy", "submittedDate")
-			s.AddQuery("sortOrder", "descending")
-			s.AddQuery("max_results", "5")
-			result, err := s.Get()
-			if err != nil {
-				bot.Reply(evt, "Hey, something broke. Try again?", slackbot.WithTyping)
-			}
-			if len(result.Entry) == 0 {
-				bot.Reply(evt, "Your query returned 0 results! Please be sure your query information is correct.", slackbot.WithTyping)
-			}
-			for i := 0; i < len(result.Entry); i++ {
-				strtm := string(result.Entry[i].Published)
-				attachment := slack.Attachment{
-					Title:      result.Entry[i].Title,
-					AuthorName: result.Entry[i].Author.Name,
-					Text:       result.Entry[i].Summary.Body,
-					TitleLink:  result.Entry[i].Link[1].Href,
-					Fallback:   result.Entry[i].Summary.Body,
-					Footer:     strtm,
-					Color:      "#371dba",
-				}
-
-				attachments := []slack.Attachment{attachment}
-
-				bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
-			}
-		} else {
-			bot.Reply(evt, "Invalid category! Type \"cs help\" for instructions.", slackbot.WithTyping)
-		}
-	}
-	if len(parts) == 2 && parts[0] == "cs" && parts[1] == "help" {
-		bot.Reply(evt, "Looking for help?", slackbot.WithTyping)
-		bot.Reply(evt, "The allowed categories are: ", slackbot.WithTyping)
-		bot.Reply(evt, "AR (Architecture)\n AI (Artificial Intelligence)\n CL (Computation and Language)\n CC (Computational Complexity)\n CE (Computational Engineering; Finance; and Science)\n CG (Computational Geometry)\n GT (Computer Science and Game Theory)\n CV (Computer Vision and Pattern Recognition)\n CY (Computers and Society)\n CR (Cryptography and Security)\n DS (Data Structures and Algorithms)\n DB (Databases)\n DL (Digital Libraries)\n DM (Discrete Mathematics)\n DC (Distributed; Parallel; and Cluster Computing)\n GL (General Literature)\n GR (Graphics)\n HC (Human-Computer Interaction)\n IR (Information Retrieval)\n IT (Information Theory)\n LG (Learning)\n LO (Logic in Computer Science)\n MS (Mathematical Software)\n MA (Multiagent Systems)\n MM (Multimedia)\n NI (Networking and Internet Architecture)\n NE (Neural and Evolutionary Computing)\n NA (Numerical Analysis)\n OS (Operating Systems)\n OH (Other)\n PF (Performance)\n PL (Programming Languages)\n RO (Robotics)\n SE (Software Engineering)\n SD (Sound)\n SC (Symbolic Computation)", slackbot.WithoutTyping)
 	}
 }
 
