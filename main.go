@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"os"
 	"strings"
+	"time"
 )
 
 //These Categories have subcategories, such as Atom Physics or Machine Learning.
@@ -321,7 +322,59 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 		bot.Reply(evt, "The categories function will allow you to parse for papers by category, such as math, physics, or computer science.", slackbot.WithTyping)
 		bot.Reply(evt, "Query format is: categories [primary] [secondary]", slackbot.WithTyping)
 		bot.Reply(evt, "For example, [categories math LO] will return the 5 most recent Logic papers published to Arxiv.", slackbot.WithTyping)
+		bot.Reply(evt, "To list all possible primary categories that DO HAVE subcategories, type: categories help primary.", slackbot.WithTyping)
+		bot.Reply(evt, "To list all possible subcategories for a given primary category, please type: categories help [primary].", slackbot.WithTyping)
+		bot.Reply(evt, "To list all possible primary categories that DO NOT possess subcategories, please type: categories help soloprimary", slackbot.WithTyping)
 	}
+	switch parts[2] {
+	case "math":
+		for k, v := range mathmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "nlin":
+		for k, v := range nlinmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "q-bio":
+		for k, v := range qbiomap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "stat":
+		for k, v := range statmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "cs":
+		for k, v := range csmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "cond-mat":
+		for k, v := range condmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "physics":
+		for k, v := range physmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "primary":
+		for k, v := range catmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	case "soloprimary":
+		for k, v := range primmap{
+			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			time.Sleep(0)
+		}
+	default:
+		bot.Reply(evt, "Please provide a valid help option: primary, solo primary, or a valid primary category.", slackbot.WithTyping)
+	}		
 }
 
 //AuthorHandler returns the papers written by a given author, submitted by the user.
