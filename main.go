@@ -245,7 +245,11 @@ func TitleHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEven
 
 //CategoriesHandler returns a list of the most recent 5 papers given a category and subcategory.
 func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	var parts2var string
 	parts := strings.Fields(evt.Text)
+	if len(parts) == 3 {
+		parts2var = parts[2]
+	}
 	if len(parts) == 3 && parts[0] == "categories" && parts[1] != "help" {
 		_, ok := catmap[parts[1]]
 		if ok {
@@ -322,44 +326,44 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 		bot.Reply(evt, "The categories function will allow you to parse for papers by category, such as math, physics, or computer science.", slackbot.WithTyping)
 		bot.Reply(evt, "Query format is: categories [primary] [secondary]", slackbot.WithTyping)
 		bot.Reply(evt, "For example, [categories math LO] will return the 5 most recent Logic papers published to Arxiv.", slackbot.WithTyping)
-		bot.Reply(evt, "To list all possible primary categories that DO HAVE subcategories, type: categories help primary.", slackbot.WithTyping)
-		bot.Reply(evt, "To list all possible subcategories for a given primary category, please type: categories help [primary].", slackbot.WithTyping)
-		bot.Reply(evt, "To list all possible primary categories that DO NOT possess subcategories, please type: categories help soloprimary", slackbot.WithTyping)
+		bot.Reply(evt, "To see all primary categores which DO NOT have secondary categories, type: categories help soloprimary.", slackbot.WithTyping)
+		bot.Reply(evt, "To see all primary categories which DO have secondary categories, type: categories help primary.", slackbot.WithTyping)
+		bot.Reply(evt, "To see all available secondary categories for a given primary category, type: categories help [primary], ex: categories help nlin.", slackbot.WithTyping)
 	}
-	switch parts[2] {
+	switch parts2var {
 	case "math":
 		for k, v := range mathmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "nlin":
 		for k, v := range nlinmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "q-bio":
 		for k, v := range qbiomap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "stat":
 		for k, v := range statmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "cs":
 		for k, v := range csmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "cond-mat":
 		for k, v := range condmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "physics":
 		for k, v := range physmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "primary":
@@ -373,7 +377,7 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 			time.Sleep(0)
 		}
 	default:
-		bot.Reply(evt, "Please provide a valid help option: primary, solo primary, or a valid primary category.", slackbot.WithTyping)
+		break
 	}		
 }
 
