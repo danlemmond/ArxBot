@@ -72,12 +72,12 @@ func main() {
 	bot := slackbot.New(os.Getenv("SLACK_TOKEN"))
 
 	toMe := bot.Messages(slackbot.DirectMessage, slackbot.DirectMention, slackbot.Mention).Subrouter()
-	toMe.Hear("(?i)(hi|hello).*").MessageHandler(HelpHandler)
-	bot.Hear("(?i)cs(.*)").MessageHandler(CSCategoriesHandler)
-	bot.Hear("(?i)author").MessageHandler(AuthorHandler)
-	bot.Hear("(?i)categories(.*)").MessageHandler(CategoriesHandler)
-	bot.Hear("(?i)arxbot(.*)").MessageHandler(HelpHandler)
-	bot.Hear("(?i)title(.*)").MessageHandler(TitleHandler)
+	go toMe.Hear("(?i)(hi|hello).*").MessageHandler(HelpHandler)
+	go bot.Hear("(?i)cs(.*)").MessageHandler(CSCategoriesHandler)
+	go bot.Hear("(?i)author").MessageHandler(AuthorHandler)
+	go bot.Hear("(?i)categories(.*)").MessageHandler(CategoriesHandler)
+	go bot.Hear("(?i)arxbot(.*)").MessageHandler(HelpHandler)
+	go bot.Hear("(?i)title(.*)").MessageHandler(TitleHandler)
 	bot.Run()
 }
 
@@ -87,7 +87,7 @@ func HelpHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent
 	if len(parts) == 2 && parts[0] == "arxbot" && parts[1] == "help" {
 		bot.Reply(evt, "Hey, thanks for using Arxbot, an Arxiv parser for Slack!", slackbot.WithTyping)
 		bot.Reply(evt, "Arxbot is a dynamic parser for Arxiv that allows user to input their own search parameters and receive results.", slackbot.WithTyping)
-		bot.Reply(evt, "The current available commands are author, cs, and categories.", slackbot.WithTyping)
+		bot.Reply(evt, "The current available commands are author, cs, title, and categories.", slackbot.WithTyping)
 		bot.Reply(evt, "Type '[command] help' to get more information about a command, ex. author help", slackbot.WithTyping)
 	}
 }
