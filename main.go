@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	slackbot "github.com/BeepBoopHQ/go-slackbot"
 	"github.com/DevinCarr/goarxiv"
 	"github.com/nlopes/slack"
@@ -10,175 +9,6 @@ import (
 	"strings"
 	"time"
 )
-
-//These Categories have subcategories, such as Atom Physics or Machine Learning.
-//They will have a separate map in order to facilitate improved error checking.
-var catmap = map[string]string{
-	"stat":     "Statistics",
-	"q-bio":    "Quantitative Biology",
-	"cs":       "Computer Science",
-	"nlin":     "Nonlinear Sciences",
-	"math":     "Math",
-	"cond-mat": "Physics - Mat",
-	"physics":  "Physics",
-}
-
-//These categories have NO SECONDARY CATEGORIES. This means that any value passed after the input will crash Arxbot
-//We'll do error checking against his map when doing our Primary Category check.
-
-var primmap = map[string]string{
-	"astro-ph": "Astrophysics",
-	"gr-qc":    "General Relativity",
-	"hep-ex":   "High Energy Physics - Experiment",
-	"hep-lat":  "High Energy Physics - Lattice",
-	"hep-ph":   "High Energy Physics - Phenomenology",
-	"hep-th":   "High Energy Physics - Theory",
-	"math-ph":  "Mathematical Physics",
-	"nucl-ex":  "Nuclear Experiment",
-	"nucl-th":  "Nuclear Theory",
-	"quant-ph": "Quantum Physics",
-}
-
-//These following suffix maps exist because I thought I would use them for error checking during the categories call.
-//Luckily I didn't have to, but I'm loathe to delete them.
-var statmap = map[string]string{
-	"AP": "Applications",
-	"CO": "Computation",
-	"ML": "Machine Learning",
-	"ME": "Methodology",
-	"TH": "Theory",
-}
-
-var qbiomap = map[string]string{
-	"BM": "Biomolecules",
-	"CB": "Cell Behavior",
-	"GN": "Genomics",
-	"MN": "Molecular Networks",
-	"NC": "Neurons and Cognition",
-	"OT": "Other",
-	"PE": "Populations and Evolution",
-	"QM": "Quantitative Methods",
-	"SC": "Subcellular Processes",
-	"TO": "Tissues and Organs",
-}
-
-var nlinmap = map[string]string{
-	"AO": "Adaptation and Self-Organizing Systems",
-	"CG": "Cellular Atuomata and Lattice Gasses",
-	"CD": "Chaotic Dynamics",
-	"SI": "Exactly Solvable and Integrable Systems",
-	"PS": "Pattern Formation and Solitons",
-}
-
-var mathmap = map[string]string{
-	"AG": "Algebraic Geometry",
-	"AT": "Algebraic Topology",
-	"AP": "Analysis of PDEs",
-	"CT": "Category Theory",
-	"CA": "Classical Analysis and ODEs",
-	"CO": "Combinatorics",
-	"AC": "Commutative Algebra",
-	"CV": "Complex Variables",
-	"DG": "Differential Geometry",
-	"DS": "Dynamical Systems",
-	"FA": "Functional Analysis",
-	"GM": "General Mathematics",
-	"GN": "General Topology",
-	"GT": "Geometric Topology",
-	"GR": "Group Theory",
-	"HO": "History and Overview",
-	"IT": "Information Theory",
-	"KT": "K-Theory and Homology",
-	"LO": "Logic",
-	"MP": "Mathematical Physics",
-	"MG": "Metric Geometry",
-	"NT": "Number Theory",
-	"NA": "Numerical Analysis",
-	"OA": "Operator Algebras",
-	"OC": "Optimization and Control",
-	"PR": "Probability",
-	"QA": "Quantum Algebra",
-	"RT": "Representation Theory",
-	"RA": "Rings and Algebras",
-	"SP": "Spectral Theory",
-	"ST": "Statistics",
-	"SG": "Symplectic Geometry",
-}
-
-var condmap = map[string]string{
-	"dis-nn":    "Disordered Systems and Neural Networks",
-	"mes-hall":  "Mesoscopic Systems and Quantum Hall Effect",
-	"mtrl-sci":  "Materials Science",
-	"other":     "Other",
-	"soft":      "Soft Condensed Matter",
-	"stat-mech": "Statistical Mechanics",
-	"str-el":    "Strongly Correlated Electrons",
-	"supr-con":  "Superconductivity",
-}
-
-var physmap = map[string]string{
-	"acc-ph":   "Accelerator Physics",
-	"ao-ph":    "Atmospheric and Oceanic Physics",
-	"atom-ph":  "Atomic Physics",
-	"atm-clus": "Atomic and Molecular Clusters",
-	"bio-ph":   "Biological Physics",
-	"chem-ph":  "Chemical Physics",
-	"class-ph": "Classical Physics",
-	"comp-ph":  "Computational Physics",
-	"data-an":  "Data Analysis; Statistics and Probability",
-	"flu-dyn":  "Fluid Dynamics",
-	"gen-ph":   "General Physics",
-	"geo-ph":   "Geophysics",
-	"hist-ph":  "History of Physics",
-	"ins-det":  "Instrumentation and Detectors",
-	"med-ph":   "Medical Physics",
-	"optics":   "Optics",
-	"ed-ph":    "Physics Education",
-	"soc-ph":   "Physics and Society",
-	"plasm-ph": "Plasma Physics",
-	"pop-ph":   "Popular Physics",
-	"space-ph": "Space Physics",
-}
-
-var csmap = map[string]string{
-	"AR": "Architecture",
-	"AI": "Artificial Intelligence",
-	"CL": "Computation and Language",
-	"CC": "Computational Complexity",
-	"CE": "Computational Engineering; Finance; and Science",
-	"CG": "Computational Geometry",
-	"GT": "Computer Science and Game Theory",
-	"CV": "Computer Vision and Pattern Recognition",
-	"CY": "Computers and Society",
-	"CR": "Cryptography and Security",
-	"DS": "Data Structures and Algorithms",
-	"DB": "Databases",
-	"DL": "Digital Libraries",
-	"DM": "Discrete Mathematics",
-	"DC": "Distributed; Parallel; and Cluster Computing",
-	"GL": "General Literature",
-	"GR": "Graphics",
-	"HC": "Human-Computer Interaction",
-	"IR": "Information Retrieval",
-	"IT": "Information Theory",
-	"LG": "Learning",
-	"LO": "Logic in Computer Science",
-	"MS": "Mathematical Software",
-	"MA": "Multiagent Systems",
-	"MM": "Multimedia",
-	"NI": "Networking and Internet Architecture",
-	"NE": "Neural and Evolutionary Computing",
-	"NA": "Numerical Analysis",
-	"OS": "Operating Systems",
-	"OH": "Other",
-	"PF": "Performance",
-	"PL": "Programming Languages",
-	"RO": "Robotics",
-	"SE": "Software Engineering",
-	"SD": "Sound",
-	"SC": "Symbolic Computation",
-}
-
 func main() {
 	bot := slackbot.New(os.Getenv("SLACK_TOKEN"))
 
@@ -210,36 +40,12 @@ func TitleHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEven
 	parts := strings.Fields(evt.Text)
 	if len(parts) >= 2 && parts[0] == "title" && parts[1] != "help" {
 		strjn := strings.Join(parts[1:], "%20")
-		s := goarxiv.New()
-		s.AddQuery("search_query", "ti:\""+strjn+"\"")
-		s.AddQuery("sortBy", "submittedDate")
-		s.AddQuery("sortOrder", "descending")
-		s.AddQuery("max_results", "5")
-		fmt.Println(s.Query)
-		result, err := s.Get()
-		if err != nil {
-			bot.Reply(evt, "Something broke! Please try again.", slackbot.WithTyping)
+		queryparam := "ti:\"" + strjn + "\""
+		go QueryBuilder(ctx, bot, evt, queryparam)
+		if len(parts) == 2 && parts[0] == "title" && parts[1] == "help" {
+			bot.Reply(evt, "The Title query allows users to query Arxiv by article title", slackbot.WithTyping)
+			bot.Reply(evt, "The command is used by typing:\ntitle [title of article]", slackbot.WithTyping)
 		}
-		for i := 0; i < len(result.Entry); i++ {
-			strtm := string(result.Entry[i].Published)
-			attachment := slack.Attachment{
-				Title:      result.Entry[i].Title,
-				AuthorName: result.Entry[i].Author.Name,
-				Text:       result.Entry[i].Summary.Body,
-				TitleLink:  result.Entry[i].Link[1].Href,
-				Fallback:   result.Entry[i].Summary.Body,
-				Footer:     strtm,
-				Color:      "#371dba",
-			}
-
-			attachments := []slack.Attachment{attachment}
-
-			bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
-		}
-	}
-	if len(parts) == 2 && parts[0] == "title" && parts[1] == "help" {
-		bot.Reply(evt, "The Title query allows users to query Arxiv by article title", slackbot.WithTyping)
-		bot.Reply(evt, "The command is used by typing:\ntitle [title of article]", slackbot.WithTyping)
 	}
 }
 
@@ -251,71 +57,19 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 		parts2var = parts[2]
 	}
 	if len(parts) == 3 && parts[0] == "categories" && parts[1] != "help" {
-		_, ok := catmap[parts[1]]
+		_, ok := Catmap[parts[1]]
 		if ok {
-			s := goarxiv.New()
-			s.AddQuery("search_query", "cat:"+parts[1]+"."+parts[2])
-			s.AddQuery("sortBy", "submittedDate")
-			s.AddQuery("sortOrder", "descending")
-			s.AddQuery("max_results", "5")
-			result, err := s.Get()
-			if err != nil {
-				bot.Reply(evt, "Something went wrong. Please try again.", slackbot.WithTyping)
-			}
-			if len(result.Entry) == 0 {
-				bot.Reply(evt, "Your query returned 0 results, which is most likely an error. Please be sure your subcategory is correct!", slackbot.WithTyping)
-			}
-			for i := 0; i < len(result.Entry); i++ {
-				strtp := string(result.Entry[i].Published)
-				attachment := slack.Attachment{
-					Title:      result.Entry[i].Title,
-					AuthorName: result.Entry[i].Author.Name,
-					Text:       result.Entry[i].Summary.Body,
-					TitleLink:  result.Entry[i].Link[1].Href,
-					Fallback:   result.Entry[i].Summary.Body,
-					Footer:     "Published " + strtp,
-					Color:      "#371dba",
-				}
-
-				attachments := []slack.Attachment{attachment}
-
-				bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
-			}
+			queryparam := "cat:" + parts[1] + "." + parts[2]
+			go QueryBuilder(ctx, bot, evt, queryparam)
 		} else {
 			bot.Reply(evt, "Sorry, invalid category or subcategory!", slackbot.WithTyping)
 		}
 	}
 	if len(parts) == 2 && parts[0] == "categories" && parts[1] != "help" {
-		_, ok := primmap[parts[1]]
+		_, ok := Primmap[parts[1]]
 		if ok {
-			s := goarxiv.New()
-			s.AddQuery("search_query", "cat:"+parts[1])
-			s.AddQuery("sortBy", "submittedDate")
-			s.AddQuery("sortOrder", "descending")
-			s.AddQuery("max_results", "5")
-			result, err := s.Get()
-			if err != nil {
-				bot.Reply(evt, "There was an error. Please try again!", slackbot.WithTyping)
-			}
-			if len(result.Entry) == 0 {
-				bot.Reply(evt, "Your query returned 0 results! Please make sure that your query information is correct.", slackbot.WithTyping)
-			}
-			for i := 0; i < len(result.Entry); i++ {
-				strtp := string(result.Entry[i].Published)
-				attachment := slack.Attachment{
-					Title:      result.Entry[i].Title,
-					AuthorName: result.Entry[i].Author.Name,
-					Text:       result.Entry[i].Summary.Body,
-					TitleLink:  result.Entry[i].Link[1].Href,
-					Fallback:   result.Entry[i].Summary.Body,
-					Footer:     "Published " + strtp,
-					Color:      "#371dba",
-				}
-
-				attachments := []slack.Attachment{attachment}
-
-				bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
-			}
+			queryparam := "cat:" + parts[1]
+			go QueryBuilder(ctx, bot, evt, queryparam)
 		} else {
 			bot.Reply(evt, "Your query failed. Please verify that the information you entered is accurate.", slackbot.WithTyping)
 			bot.Reply(evt, "Please be aware that Astrophysics, General Relativity and Quantum Cosmology, the High Energy Physics family, Mathematical Physics, Nuclear Experiment/Nuclear Theory, and Quantum Theory do NOT have subcategories.", slackbot.WithTyping)
@@ -332,119 +86,100 @@ func CategoriesHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.Messag
 	}
 	switch parts2var {
 	case "math":
-		for k, v := range mathmap{
-			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
+		for k, v := range Mathmap {
+			bot.Reply(evt, "Secondary Category: "+"\""+k+"\""+" Topic: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "nlin":
-		for k, v := range nlinmap{
-			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
+		for k, v := range Nlinmap {
+			bot.Reply(evt, "Secondary Category: "+"\""+k+"\""+" Topic: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "q-bio":
-		for k, v := range qbiomap{
-			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
+		for k, v := range Qbiomap {
+			bot.Reply(evt, "Secondary Category: "+"\""+k+"\""+" Topic: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "stat":
-		for k, v := range statmap{
-			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
+		for k, v := range Statmap {
+			bot.Reply(evt, "Secondary Category: "+"\""+k+"\""+" Topic: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "cs":
-		for k, v := range csmap{
-			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
+		for k, v := range CSmap {
+			bot.Reply(evt, "Secondary Category: "+"\""+k+"\""+" Topic: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "cond-mat":
-		for k, v := range condmap{
-			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
+		for k, v := range Condmap {
+			bot.Reply(evt, "Secondary Category: "+"\""+k+"\""+" Topic: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "physics":
-		for k, v := range physmap{
-			bot.Reply(evt, "Secondary Category: " + "\"" + k + "\"" + " Topic: "+ v, slackbot.WithTyping)
+		for k, v := range Physmap {
+			bot.Reply(evt, "Secondary Category: "+"\""+k+"\""+" Topic: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "primary":
-		for k, v := range catmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+		for k, v := range Catmap {
+			bot.Reply(evt, "Category: "+"\""+k+"\""+" Description: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	case "soloprimary":
-		for k, v := range primmap{
-			bot.Reply(evt, "Category: " + "\"" + k + "\"" + " Description: "+ v, slackbot.WithTyping)
+		for k, v := range Primmap {
+			bot.Reply(evt, "Category: "+"\""+k+"\""+" Description: "+v, slackbot.WithTyping)
 			time.Sleep(0)
 		}
 	default:
 		break
-	}		
+	}
 }
 
 //AuthorHandler returns the papers written by a given author, submitted by the user.
 func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	parts := strings.Fields(evt.Text)
 	if len(parts) == 2 && parts[0] == "author" && parts[1] != "help" {
-		s := goarxiv.New()
-		s.AddQuery("search_query", "au:"+parts[1])
-		s.AddQuery("sortBy", "submittedDate")
-		s.AddQuery("sortOrder", "descending")
-		s.AddQuery("max_results", "5")
-		result, err := s.Get()
-		if err != nil {
-			bot.Reply(evt, "Sorry, there was an error. Try again!", slackbot.WithTyping)
-		}
-		if len(result.Entry) == 0 {
-			bot.Reply(evt, "Your query returned 0 results! Please be sure that your query information is correct!", slackbot.WithTyping)
-		}
-		for i := 0; i < len(result.Entry); i++ {
-			strtp := string(result.Entry[i].Published)
-			attachment := slack.Attachment{
-				Title:      result.Entry[i].Title,
-				AuthorName: result.Entry[i].Author.Name,
-				Text:       result.Entry[i].Summary.Body,
-				TitleLink:  result.Entry[i].Link[1].Href,
-				Fallback:   result.Entry[i].Summary.Body,
-				Footer:     "Published " + strtp,
-				Color:      "#371dba",
-			}
-
-			attachments := []slack.Attachment{attachment}
-			bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
-		}
+		queryparam := "au:" + parts[1]
+		go QueryBuilder(ctx, bot, evt, queryparam)
 	}
 	if len(parts) == 3 && parts[0] == "author" {
 		a := []rune(parts[1])
-		s := goarxiv.New()
-		s.AddQuery("search_query", "au:"+parts[2]+"_"+string(a[0]))
-		s.AddQuery("sortBy", "submittedDate")
-		s.AddQuery("sortOrder", "descending")
-		s.AddQuery("max_results", "5")
-		result, err := s.Get()
-		if err != nil {
-			bot.Reply(evt, "Sorry, there was an error. Try again!", slackbot.WithTyping)
-		}
-		if len(result.Entry) == 0 {
-			bot.Reply(evt, "Your query returned 0 results! Please be sure your query information is correct.", slackbot.WithTyping)
-		}
-		for i := 0; i < len(result.Entry); i++ {
-			strtp := string(result.Entry[i].Published)
-			attachment := slack.Attachment{
-				Title:      result.Entry[i].Title,
-				AuthorName: result.Entry[i].Author.Name,
-				Text:       result.Entry[i].Summary.Body,
-				TitleLink:  result.Entry[i].Link[1].Href,
-				Fallback:   result.Entry[i].Summary.Body,
-				Footer:     "Published " + strtp,
-				Color:      "#371dba",
-			}
-
-			attachments := []slack.Attachment{attachment}
-			bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
+		queryparam := "au:" + parts[2] + "_" + string(a[0])
+		QueryBuilder(ctx, bot, evt, queryparam)
+		if len(parts) == 2 && parts[0] == "author" && parts[1] == "help" {
+			bot.Reply(evt, "The author command allows you to search for authors by last name, or first and last name.", slackbot.WithTyping)
+			bot.Reply(evt, "The two uses are: author [lastname] or author [first] [last]", slackbot.WithTyping)
 		}
 	}
-	if len(parts) == 2 && parts[0] == "author" && parts[1] == "help" {
-		bot.Reply(evt, "The author command allows you to search for authors by last name, or first and last name.", slackbot.WithTyping)
-		bot.Reply(evt, "The two uses are: author [lastname] or author [first] [last]", slackbot.WithTyping)
+}
+
+//QueryBuilder builds and returns an Arxiv query.
+func QueryBuilder(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent, s string) {
+	query := goarxiv.New()
+	query.AddQuery("search_query", s)
+	query.AddQuery("sortBy", "submittedDate")
+	query.AddQuery("sortOrder", "descending")
+	query.AddQuery("max_results", "5")
+	result, err := query.Get()
+	if err != nil {
+		bot.Reply(evt, "Sorry, there was an error. Try again!", slackbot.WithTyping)
+	}
+	if len(result.Entry) == 0 {
+		bot.Reply(evt, "Your query returned 0 results! Please be sure that your query information is correct!", slackbot.WithTyping)
+	}
+	for i := 0; i < len(result.Entry); i++ {
+		strtp := string(result.Entry[i].Published)
+		attachment := slack.Attachment{
+			Title:      result.Entry[i].Title,
+			AuthorName: result.Entry[i].Author.Name,
+			Text:       result.Entry[i].Summary.Body,
+			TitleLink:  result.Entry[i].Link[1].Href,
+			Fallback:   result.Entry[i].Summary.Body,
+			Footer:     "Published " + strtp,
+			Color:      "#371dba",
+		}
+
+		attachments := []slack.Attachment{attachment}
+		bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
 	}
 }
