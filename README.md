@@ -7,11 +7,10 @@
 # Installation:
 
 1. Clone the repo
-2. Export Slack Token
-3. run the command:
-4. `go run main.go`
-5. Add bot to channel using /invite
-6. Run queries
+2. Export Slack Token using `export SLACK_TOKEN="[SLACKTOKEN]"`
+3. run the command: `go run *.go`
+4. Add bot to channel using /invite
+5. Run queries
 
 ---
 

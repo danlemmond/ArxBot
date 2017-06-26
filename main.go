@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 )
+
 func main() {
 	bot := slackbot.New(os.Getenv("SLACK_TOKEN"))
 
@@ -25,8 +26,8 @@ func main() {
 func HelpHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
 	parts := strings.Fields(evt.Text)
 	if len(parts) == 2 && parts[0] == "arxbot" && parts[1] == "help" {
-		bot.Reply(evt, "Hey, thanks for using Arxbot, an Arxiv parser for Slack!", slackbot.WithTyping)
-		bot.Reply(evt, "Arxbot is a dynamic parser for Arxiv that allows user to input their own search parameters and receive results.", slackbot.WithTyping)
+		bot.Reply(evt, "Hey, thanks for using Arxbot, a paper retrieval bot for Slack", slackbot.WithTyping)
+		bot.Reply(evt, "Arxbot is a bot for Arxiv that allows user to input their own search parameters and receive results.", slackbot.WithTyping)
 		bot.Reply(evt, "The current available commands are author, title, and categories.", slackbot.WithTyping)
 		bot.Reply(evt, "Type '[command] help' to get more information about a command, ex. author help", slackbot.WithTyping)
 	}
@@ -146,10 +147,10 @@ func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEve
 		a := []rune(parts[1])
 		queryparam := "au:" + parts[2] + "_" + string(a[0])
 		QueryBuilder(ctx, bot, evt, queryparam)
-		if len(parts) == 2 && parts[0] == "author" && parts[1] == "help" {
-			bot.Reply(evt, "The author command allows you to search for authors by last name, or first and last name.", slackbot.WithTyping)
-			bot.Reply(evt, "The two uses are: author [lastname] or author [first] [last]", slackbot.WithTyping)
-		}
+	}
+	if len(parts) == 2 && parts[0] == "author" && parts[1] == "help" {
+		bot.Reply(evt, "The author command allows you to search for authors by last name, or first and last name.", slackbot.WithTyping)
+		bot.Reply(evt, "The two uses are: author [lastname] or author [first] [last]", slackbot.WithTyping)
 	}
 }
 
