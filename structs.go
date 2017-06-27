@@ -1,5 +1,12 @@
 package main
 
+import (
+	slackbot "github.com/BeepBoopHQ/go-slackbot"
+	"github.com/DevinCarr/goarxiv"
+	"github.com/nlopes/slack"
+	"golang.org/x/net/context"
+)
+
 //Catmap - These Categories have subcategories, such as Atom Physics or Machine Learning.
 //They will have a separate map in order to facilitate improved error checking.
 var Catmap = map[string]string{
@@ -96,7 +103,7 @@ var Mathmap = map[string]string{
 	"SG": "Symplectic Geometry",
 }
 
-//Condmap for building search queries. 
+//Condmap for building search queries.
 var Condmap = map[string]string{
 	"dis-nn":    "Disordered Systems and Neural Networks",
 	"mes-hall":  "Mesoscopic Systems and Quantum Hall Effect",
@@ -108,7 +115,7 @@ var Condmap = map[string]string{
 	"supr-con":  "Superconductivity",
 }
 
-//Physmap for building search queries. 
+//Physmap for building search queries.
 var Physmap = map[string]string{
 	"acc-ph":   "Accelerator Physics",
 	"ao-ph":    "Atmospheric and Oceanic Physics",
@@ -133,7 +140,7 @@ var Physmap = map[string]string{
 	"space-ph": "Space Physics",
 }
 
-//CSmap for building search queries. 
+//CSmap for building search queries.
 var CSmap = map[string]string{
 	"AR": "Architecture",
 	"AI": "Artificial Intelligence",
@@ -171,4 +178,35 @@ var CSmap = map[string]string{
 	"SE": "Software Engineering",
 	"SD": "Sound",
 	"SC": "Symbolic Computation",
+}
+
+//QueryBuilder builds and returns an Arxiv query.
+func QueryBuilder(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent, s string) {
+	query := goarxiv.New()
+	query.AddQuery("search_query", s)
+	query.AddQuery("sortBy", "submittedDate")
+	query.AddQuery("sortOrder", "descending")
+	query.AddQuery("max_results", "5")
+	result, err := query.Get()
+	if err != nil {
+		bot.Reply(evt, "Sorry, there was an error. Try again!", slackbot.WithTyping)
+	}
+	if len(result.Entry) == 0 {
+		bot.Reply(evt, "Your query returned 0 results! Please be sure that your query information is correct!", slackbot.WithTyping)
+	}
+	for i := 0; i < len(result.Entry); i++ {
+		strtp := string(result.Entry[i].Published)
+		attachment := slack.Attachment{
+			Title:      result.Entry[i].Title,
+			AuthorName: result.Entry[i].Author.Name,
+			Text:       result.Entry[i].Summary.Body,
+			TitleLink:  result.Entry[i].Link[1].Href,
+			Fallback:   result.Entry[i].Summary.Body,
+			Footer:     "Published " + strtp,
+			Color:      "#371dba",
+		}
+
+		attachments := []slack.Attachment{attachment}
+		bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
+	}
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	slackbot "github.com/BeepBoopHQ/go-slackbot"
-	"github.com/DevinCarr/goarxiv"
 	"github.com/nlopes/slack"
 	"golang.org/x/net/context"
 	"os"
@@ -43,10 +42,10 @@ func TitleHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEven
 		strjn := strings.Join(parts[1:], "%20")
 		queryparam := "ti:\"" + strjn + "\""
 		go QueryBuilder(ctx, bot, evt, queryparam)
-		if len(parts) == 2 && parts[0] == "title" && parts[1] == "help" {
-			bot.Reply(evt, "The Title query allows users to query Arxiv by article title", slackbot.WithTyping)
-			bot.Reply(evt, "The command is used by typing:\ntitle [title of article]", slackbot.WithTyping)
-		}
+	}
+	if len(parts) == 2 && parts[0] == "title" && parts[1] == "help" {
+		bot.Reply(evt, "The Title query allows users to query Arxiv by article title", slackbot.WithTyping)
+		bot.Reply(evt, "The command is used by typing:\ntitle [title of article]", slackbot.WithTyping)
 	}
 }
 
@@ -151,36 +150,5 @@ func AuthorHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEve
 	if len(parts) == 2 && parts[0] == "author" && parts[1] == "help" {
 		bot.Reply(evt, "The author command allows you to search for authors by last name, or first and last name.", slackbot.WithTyping)
 		bot.Reply(evt, "The two uses are: author [lastname] or author [first] [last]", slackbot.WithTyping)
-	}
-}
-
-//QueryBuilder builds and returns an Arxiv query.
-func QueryBuilder(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent, s string) {
-	query := goarxiv.New()
-	query.AddQuery("search_query", s)
-	query.AddQuery("sortBy", "submittedDate")
-	query.AddQuery("sortOrder", "descending")
-	query.AddQuery("max_results", "5")
-	result, err := query.Get()
-	if err != nil {
-		bot.Reply(evt, "Sorry, there was an error. Try again!", slackbot.WithTyping)
-	}
-	if len(result.Entry) == 0 {
-		bot.Reply(evt, "Your query returned 0 results! Please be sure that your query information is correct!", slackbot.WithTyping)
-	}
-	for i := 0; i < len(result.Entry); i++ {
-		strtp := string(result.Entry[i].Published)
-		attachment := slack.Attachment{
-			Title:      result.Entry[i].Title,
-			AuthorName: result.Entry[i].Author.Name,
-			Text:       result.Entry[i].Summary.Body,
-			TitleLink:  result.Entry[i].Link[1].Href,
-			Fallback:   result.Entry[i].Summary.Body,
-			Footer:     "Published " + strtp,
-			Color:      "#371dba",
-		}
-
-		attachments := []slack.Attachment{attachment}
-		bot.ReplyWithAttachments(evt, attachments, slackbot.WithTyping)
 	}
 }
